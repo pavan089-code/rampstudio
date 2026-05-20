@@ -2,14 +2,24 @@
 
 import "./globals.css";
 
-import { Playfair_Display } from "next/font/google";
+import { Geist, Playfair_Display } from "next/font/google";
 
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
+import PageTransition from "@/components/PageTransition";
+import WhatsAppButton from "@/components/WhatsappButton";
+import Loader from "@/components/Loader";
+import CinematicGrain from "@/components/CinematicGrains";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "600"],
+  variable: "--font-playfair",
+});
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
 });
 
 export const metadata = {
@@ -19,25 +29,26 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body
         className={`
-          ${playfair.className}
+          ${geist.variable}
+          ${playfair.variable}
           bg-primary
+          font-sans
           text-white
           antialiased
         `}
       >
-
-        {/* Navbar */}
+        <Loader />
+        <CinematicGrain />
+        <PageTransition>
+        <WhatsAppButton />
         <Navbar />
-
-        {/* Page Content */}
-        {children}
-
-        {/* Footer */}
+        <PageTransition>{children}</PageTransition>
+        
         <Footer />
-
+        </PageTransition>
       </body>
     </html>
   );

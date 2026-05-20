@@ -2,30 +2,35 @@ import Gallery from "@/components/Gallery";
 
 export default function PortfolioPage() {
   return (
-    <main className="bg-primary min-h-screen text-white pt-32 px-6 md:px-16">
+    <main className="min-h-screen bg-primary px-6 pt-32 text-white sm:px-8 md:px-16 md:pt-40">
+      <div className="mx-auto mb-14 max-w-7xl border-b border-white/10 pb-12 md:mb-20 md:pb-16">
+        <div className="grid gap-10 md:grid-cols-12 md:items-end">
+          <div className="md:col-span-8">
+            <p className="mb-4 text-xs uppercase tracking-[0.24em] text-[var(--accent-gold)]">
+              Portfolio
+            </p>
 
-      {/* Heading */}
-      <div className="mb-20 max-w-3xl">
+            <h1 className="max-w-4xl font-serif text-5xl leading-[1.02] sm:text-6xl md:text-8xl">
+              Timeless Wedding Stories
+            </h1>
+          </div>
 
-        <p className="text-[var(--accent-gold)] tracking-[0.2em] text-sm uppercase mb-4">
-          Portfolio
-        </p>
+          <div className="md:col-span-4 md:pb-2">
+            <p className="max-w-xl text-sm leading-7 text-muted sm:text-base md:ml-auto">
+              A curated collection of cinematic wedding moments, intimate
+              emotions, and elegant celebrations captured through the lens of
+              Ramp Studio.
+            </p>
 
-        <h1 className="text-5xl md:text-7xl font-serif leading-tight">
-          Timeless Wedding Stories
-        </h1>
-
-        <p className="text-muted mt-6 max-w-xl leading-relaxed">
-          A curated collection of cinematic wedding moments,
-          intimate emotions, and elegant celebrations captured
-          through the lens of Ramp Studio.
-        </p>
-
+            <div className="mt-8 flex gap-8 border-t border-white/10 pt-6 text-xs uppercase tracking-[0.18em] text-white/55">
+              <span>04 Stories</span>
+              <span>Wedding / Editorial</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Gallery */}
       <Gallery />
-
     </main>
   );
 }

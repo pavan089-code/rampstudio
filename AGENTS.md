@@ -1,5 +1,57 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Ramp Studio AI Development Rules
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+## Brand Identity
+Ramp Studio is a premium cinematic wedding photography brand.
+
+Design language:
+- luxurious
+- editorial
+- cinematic
+- elegant
+- emotional
+- immersive
+- minimal
+
+Avoid:
+- startup/SaaS UI
+- glassmorphism
+- bright gradients
+- colorful elements
+- clutter
+- flashy animations
+
+## Tech Stack
+- Next.js App Router
+- Tailwind CSS
+- Framer Motion
+
+## Styling Rules
+- Preserve dark cinematic aesthetic
+- Use warm gold accents minimally
+- Maintain generous whitespace
+- Prioritize typography hierarchy
+- Keep layouts responsive
+
+## Animation Rules
+Animations should feel:
+- smooth
+- cinematic
+- premium
+- subtle
+
+Avoid:
+- bouncy motion
+- exaggerated transitions
+- gimmicky effects
+
+## Code Rules
+- Reuse components
+- Keep architecture clean
+- Avoid unnecessary rewrites
+- Use scalable patterns
+- Keep components modular
+- Preserve existing visual identity
+
+## UX Goals
+The website should feel like:
+a luxury cinematic wedding photography experience.

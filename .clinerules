@@ -1,0 +1,128 @@
+Ramp Studio is a premium cinematic wedding photography website.
+
+Tech Stack:
+- Next.js App Router
+- Tailwind CSS
+- Framer Motion
+- next/image
+
+Design Direction:
+- luxurious
+- cinematic
+- editorial
+- elegant
+- emotional
+- immersive
+- minimal
+- timeless
+
+Visual Identity:
+- dark cinematic aesthetic
+- warm gold accents
+- deep blacks
+- soft contrast
+- atmospheric imagery
+- premium spacing
+- refined typography hierarchy
+
+Avoid:
+- startup/SaaS UI
+- glassmorphism
+- colorful cards
+- bright gradients
+- neon effects
+- cluttered layouts
+- hard shadows
+- flashy animations
+- overdesigned UI
+- generic templates
+
+Animation Rules:
+- smooth
+- subtle
+- cinematic
+- premium
+- performance-friendly
+- ease-in-out motion
+- slow refined transitions
+
+Avoid:
+- bouncy motion
+- exaggerated transitions
+- gimmicky interactions
+- aggressive hover scaling
+- distracting animations
+
+Typography Rules:
+- prioritize typography hierarchy
+- elegant spacing between sections
+- cinematic editorial feel
+- avoid oversized text blocks
+- avoid cramped layouts
+- maintain strong readability
+
+Layout Rules:
+- preserve spacious layouts
+- maintain immersive imagery
+- use balanced whitespace
+- avoid dense grids
+- maintain visual rhythm
+
+Code Rules:
+- reuse existing components
+- avoid unnecessary rewrites
+- maintain scalable architecture
+- keep components modular
+- preserve responsive layouts
+- prefer reusable sections/components
+- avoid deeply nested JSX
+- avoid duplicated logic
+- prefer clean Tailwind utility composition
+
+Performance Rules:
+- optimize animations
+- lazy load heavy assets
+- use next/image properly
+- avoid unnecessary rerenders
+- minimize client components
+- preserve smooth scrolling performance
+
+Implementation Rules:
+- do not redesign unrelated sections
+- modify only necessary files
+- explain architectural decisions
+- explain modified files
+- preserve existing functionality
+- avoid unnecessary dependencies
+
+UX Goals:
+The website should feel like:
+- a luxury cinematic wedding film
+- emotionally immersive
+- refined and premium
+- editorial and timeless
+- elegant without feeling corporate
+
+Motion Defaults:
+- duration between 0.4s and 0.8s
+- use opacity + translate transitions primarily
+- avoid excessive scale animation
+- prioritize cinematic easing
+
+File Safety Rules:
+- never rewrite entire files unnecessarily
+- preserve existing responsive behavior
+- preserve current imports unless required
+- avoid breaking existing sections
+- prefer incremental enhancements
+
+Before coding:
+- first analyze the existing structure
+- explain implementation approach
+- identify reusable components
+- avoid assumptions
+
+After coding:
+- explain modified files
+- explain architectural decisions
+- explain UX improvements
