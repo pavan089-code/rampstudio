@@ -1,108 +1,156 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useMemo, useState } from "react";
 import GalleryLightbox from "./GalleryLightbox";
 
-const images = [
-  {
-    src: "/img2.jpeg",
-    title: "The Ceremony Edit",
-    category: "Wedding Story",
-    location: "Golden Hour",
-    alt: "Cinematic wedding ceremony captured by Ramp Studio",
-  },
-  {
-    src: "/img3.jpeg",
-    title: "Quiet Vows",
-    category: "Intimate Moments",
-    location: "Private Rituals",
-    alt: "Emotional wedding portrait by Ramp Studio",
-  },
-  {
-    src: "/img4.jpeg",
-    title: "Reception Afterglow",
-    category: "Celebration",
-    location: "Evening Light",
-    alt: "Luxury wedding reception photography by Ramp Studio",
-  },
-  {
-    src: "/img5.jpeg",
-    title: "Editorial Bride",
-    category: "Portraiture",
-    location: "Fashion Inspired",
-    alt: "Editorial bridal portrait photographed by Ramp Studio",
-  },
-];
+const allCategory = { slug: "all", label: "All" };
 
-const layout = [
-  "md:col-span-8 md:aspect-[16/10]",
-  "md:col-span-4 md:mt-28 md:aspect-[3/4]",
-  "md:col-span-5 md:aspect-[4/5]",
-  "md:col-span-7 md:mt-20 md:aspect-[16/11]",
-];
+const reveal = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0 },
+};
 
-export default function Gallery() {
+export default function Gallery({ categories }) {
+  const [activeCategory, setActiveCategory] = useState(allCategory.slug);
   const [activeIndex, setActiveIndex] = useState(null);
+
+  const filteredImages = useMemo(() => {
+    if (activeCategory === allCategory.slug) {
+      return categories.flatMap((category) => category.images);
+    }
+
+    return (
+      categories.find((category) => category.slug === activeCategory)?.images ??
+      []
+    );
+  }, [activeCategory, categories]);
+
+  const selectCategory = (slug) => {
+    setActiveCategory(slug);
+    setActiveIndex(null);
+  };
 
   return (
     <section className="pb-24 md:pb-36">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-10 flex items-end justify-between gap-6 md:mb-14">
+      <div className="mx-auto max-w-[1600px]">
+        <div className="mb-8 flex items-end justify-between gap-6 md:mb-10">
           <p className="text-xs uppercase tracking-[0.24em] text-white/45">
             Selected Chapters
           </p>
           <div className="hidden h-px flex-1 bg-white/10 md:block" />
+          <p className="text-[10px] uppercase tracking-[0.24em] text-white/35">
+            {String(filteredImages.length).padStart(2, "0")} Frames
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-y-12 sm:gap-y-14 md:grid-cols-12 md:items-start md:gap-x-8 md:gap-y-20">
-        {images.map((image, index) => (
-          <article key={image.src} className={layout[index]}>
+        <div className="-mx-6 mb-8 overflow-x-auto px-6 pb-2 sm:-mx-8 sm:px-8 md:mx-0 md:mb-10 md:px-0">
+          <div className="flex min-w-max gap-3 md:grid md:min-w-0 md:grid-cols-6 md:gap-4">
             <button
               type="button"
-              onClick={() => setActiveIndex(index)}
-              className="group relative block aspect-[4/5] w-full overflow-hidden bg-white/[0.03] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)] md:aspect-[inherit]"
+              onClick={() => selectCategory(allCategory.slug)}
+              aria-pressed={activeCategory === allCategory.slug}
+              className={`group flex min-h-24 w-28 flex-col justify-end border p-3 text-left transition duration-500 md:w-auto ${
+                activeCategory === allCategory.slug
+                  ? "border-[var(--accent-gold)] bg-white/[0.07]"
+                  : "border-white/10 bg-white/[0.025] hover:border-white/30"
+              }`}
             >
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                loading="lazy"
-                className="object-cover transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
-                sizes={
-                  index === 0 || index === 3
-                    ? "(max-width: 768px) 100vw, 66vw"
-                    : "(max-width: 768px) 100vw, 34vw"
-                }
-                quality={86}
-              />
-              <div className="absolute inset-0 bg-black/0 transition duration-700 group-hover:bg-black/12" />
-              <div className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center border border-white/20 bg-black/20 text-[11px] tracking-[0.18em] text-white backdrop-blur-sm transition duration-500 group-hover:border-[var(--accent-gold)] group-hover:text-[var(--accent-gold)] sm:left-5 sm:top-5">
-                {String(index + 1).padStart(2, "0")}
-              </div>
+              <span className="text-[9px] uppercase tracking-[0.22em] text-white/40">
+                Complete Edit
+              </span>
+              <span className="mt-2 font-serif text-lg text-white">All</span>
             </button>
 
-            <div className="mt-5 grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-[1fr_auto] sm:items-start">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--accent-gold)]">
-                  {image.category}
-                </p>
-                <h2 className="mt-2 font-serif text-2xl leading-tight text-white sm:text-3xl">
-                  {image.title}
-                </h2>
-              </div>
-
-              <p className="text-xs uppercase tracking-[0.2em] text-white/45 sm:pt-1">
-                {image.location}
-              </p>
-            </div>
-          </article>
-        ))}
+            {categories.map((category) => (
+              <button
+                key={category.slug}
+                type="button"
+                onClick={() => selectCategory(category.slug)}
+                aria-pressed={activeCategory === category.slug}
+                className={`group relative h-24 w-32 overflow-hidden border text-left transition duration-500 md:w-auto ${
+                  activeCategory === category.slug
+                    ? "border-[var(--accent-gold)]"
+                    : "border-white/10 hover:border-white/35"
+                }`}
+              >
+                <Image
+                  src={category.cover.src}
+                  alt={`${category.label} portfolio cover`}
+                  fill
+                  className="object-cover transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
+                  sizes="(max-width: 767px) 128px, 16vw"
+                  quality={75}
+                />
+                <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10 transition duration-500 group-hover:from-black/65" />
+                <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
+                  <span className="font-serif text-base text-white">
+                    {category.label}
+                  </span>
+                  <span className="text-[9px] tracking-[0.16em] text-white/65">
+                    {String(category.images.length).padStart(2, "0")}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            className="columns-2 gap-3 sm:gap-4 md:columns-3 md:gap-5 xl:columns-4 2xl:columns-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+          >
+            {filteredImages.map((image, index) => (
+              <motion.article
+                key={image.src}
+                className="mb-3 break-inside-avoid sm:mb-4 md:mb-5"
+                variants={reveal}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{
+                  duration: 0.68,
+                  delay: (index % 5) * 0.05,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className="group relative block w-full overflow-hidden bg-white/[0.03] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-gold)]"
+                  aria-label={`Open ${image.title}`}
+                >
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={image.width}
+                    height={image.height}
+                    loading="lazy"
+                    className="h-auto w-full transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.045]"
+                    sizes="(max-width: 767px) 50vw, (max-width: 1279px) 33vw, (max-width: 1535px) 25vw, 20vw"
+                    quality={86}
+                  />
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent opacity-45 transition duration-700 group-hover:opacity-100" />
+                  <span className="absolute inset-x-0 bottom-0 translate-y-2 p-3 opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100 sm:p-4">
+                    <span className="text-[9px] uppercase tracking-[0.22em] text-[var(--accent-soft)]">
+                      {image.category}
+                    </span>
+                  </span>
+                </button>
+              </motion.article>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <GalleryLightbox
-        images={images}
+        images={filteredImages}
         activeIndex={activeIndex}
         onClose={() => setActiveIndex(null)}
         onSelect={setActiveIndex}
