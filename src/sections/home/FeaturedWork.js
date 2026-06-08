@@ -5,25 +5,25 @@ import Reveal from "../../components/Reveal";
 export default function FeaturedWork() {
   const images = [
     {
-      src: "/img2.jpeg",
+      src: "/marraige/img2.jpeg",
       title: "Ceremony",
       span: "md:col-span-7",
       frame: "md:aspect-[16/11]",
     },
     {
-      src: "/img5.jpeg",
+      src: "/marraige/img5.jpeg",
       title: "Portraits",
       span: "md:col-span-5 md:mt-16",
       frame: "md:aspect-[4/5]",
     },
     {
-      src: "/img3.jpeg",
+      src: "/marraige/img3.jpeg",
       title: "Details",
       span: "md:col-span-5",
       frame: "md:aspect-[4/5]",
     },
     {
-      src: "/img4.jpeg",
+      src: "/marraige/img4.jpeg",
       title: "Celebration",
       span: "md:col-span-7 md:mt-12",
       frame: "md:aspect-[16/11]",

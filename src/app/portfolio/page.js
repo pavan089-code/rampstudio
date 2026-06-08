@@ -31,13 +31,13 @@ export default function PortfolioPage() {
 
             <div className="mt-8 flex gap-8 border-t border-white/10 pt-6 text-xs uppercase tracking-[0.18em] text-white/55">
               <span>{imageCount} Frames</span>
-              <span>Five Collections</span>
+              <span>{categories.length} Collections</span>
             </div>
           </div>
         </div>
       </div>
 
-      <Gallery categories={categories} />
+      <Gallery categories={categories} totalImages={imageCount} />
     </main>
   );
 }

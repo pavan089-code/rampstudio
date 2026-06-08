@@ -8,37 +8,37 @@ const services = [
     title: "Weddings",
     description:
       "Emotionally rich wedding storytelling crafted with cinematic depth and timeless elegance.",
-    image: "/wed2.jpeg",
+    image: "/marraige/wed2.jpeg",
   },
   {
     title: "Pre-Wedding",
     description:
       "Intimate visual narratives designed to feel natural, atmospheric, and deeply personal.",
-    image: "/prewed1.jpeg",
+    image: "/prewed/prewed1.jpeg",
   },
   {
     title: "Engagements",
     description:
       "Quiet moments, honest connection, and refined imagery that celebrates your story.",
-    image: "/sang1.jpeg",
+    image: "/prewed/sang1.jpeg",
   },
   {
     title: "Destination Weddings",
     description:
       "Immersive wedding films and photography captured across extraordinary locations.",
-    image: "/hero.jpeg",
+    image: "/marraige/hero.jpeg",
   },
   {
     title: "Events",
     description:
       "Elegant event coverage preserving atmosphere, energy, and authentic human emotion.",
-    image: "/img2.jpeg",
+    image: "/marraige/img2.jpeg",
   },
   {
     title: "Meternity & Newborn",
     description:
       "Short-form cinematic storytelling crafted with movement, rhythm, and mood.",
-    image: "/met1.jpeg",
+    image: "/meternity/met1.jpeg",
   },
 ];
 

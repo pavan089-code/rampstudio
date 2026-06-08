@@ -1,16 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import { portfolioCategoryConfig } from "./portfolioConfig";
 
 const publicDirectory = path.join(process.cwd(), "public");
 const supportedExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
-
-const categoryFolders = [
-  { slug: "birthday", label: "Birthday" },
-  { slug: "marraige", label: "Marriage" },
-  { slug: "meternity", label: "Maternity" },
-  { slug: "model", label: "Model" },
-  { slug: "prewed", label: "Pre-Wedding" },
-];
 
 function getPngDimensions(buffer) {
   return {
@@ -91,9 +84,16 @@ function getPublicSrc(folder, filename) {
   return `/${[folder, filename].map(encodeURIComponent).join("/")}`;
 }
 
+function getExistingFolder(folders) {
+  return folders.find((folder) =>
+    fs.existsSync(path.join(publicDirectory, folder))
+  );
+}
+
 export function getPortfolioCategories() {
-  return categoryFolders.map(({ slug, label }) => {
-    const folderPath = path.join(publicDirectory, slug);
+  return portfolioCategoryConfig.map(({ slug, label, folders, description }) => {
+    const folder = getExistingFolder(folders);
+    const folderPath = path.join(publicDirectory, folder);
     const filenames = fs
       .readdirSync(folderPath)
       .filter((filename) =>
@@ -115,7 +115,7 @@ export function getPortfolioCategories() {
 
       return {
         ...dimensions,
-        src: getPublicSrc(slug, filename),
+        src: getPublicSrc(folder, filename),
         title: `${label} Frame ${String(index + 1).padStart(2, "0")}`,
         category: label,
         alt: `${label} photography by Ramp Studio`,
@@ -125,6 +125,8 @@ export function getPortfolioCategories() {
     return {
       slug,
       label,
+      description,
+      folder,
       cover: images[0],
       images,
     };
