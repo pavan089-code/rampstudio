@@ -197,14 +197,14 @@ h1, h2, h3, h4 {
   color: black !important;
 }
 
-.event-experience { background: var(--event-bg); color: var(--event-text); font-family: var(--event-font); }
-.event-section { padding: clamp(5rem, 10vw, 9rem) 1.25rem; }
-.event-section:nth-of-type(even) { background: var(--event-surface); }
-.event-surface { background: var(--event-surface); border: 1px solid color-mix(in srgb, var(--event-text) 12%, transparent); border-radius: var(--event-radius); }
-.event-kicker { color: var(--event-accent); font-family: var(--font-geist-sans); font-size: .7rem; letter-spacing: .22em; text-transform: uppercase; }
-.event-heading { font-size: clamp(2.5rem, 7vw, 5rem); line-height: 1.05; margin-top: 1rem; }
-.event-field { background: transparent; border: 1px solid color-mix(in srgb, var(--event-text) 18%, transparent); border-radius: var(--event-radius); color: var(--event-text); min-height: 3.25rem; outline: none; padding: .8rem 1rem; width: 100%; }
-.event-field:focus { border-color: var(--event-accent); }
-.event-field option { background: var(--event-surface); color: var(--event-text); }
-.event-button { background: var(--event-accent); border-radius: var(--event-radius); color: var(--event-bg); min-height: 3rem; padding: .75rem 1.5rem; transition: opacity .3s ease, transform .3s ease; }
-.event-button:hover { opacity: .9; transform: translateY(-1px); }
+@keyframes event-hero-reveal {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.event-hero-content {
+  animation: event-hero-reveal 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.event-theme-midnight { background-color: #07090d; }
+.event-theme-classic-ivory { background-color: #17130e; }

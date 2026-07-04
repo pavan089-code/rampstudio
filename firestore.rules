@@ -25,11 +25,6 @@ service cloud.firestore {
         && currentUserRole() == 'super_admin';
     }
 
-    function isPublishedEvent(eventId) {
-      return exists(/databases/$(database)/documents/events/$(eventId))
-        && get(/databases/$(database)/documents/events/$(eventId)).data.status == 'published';
-    }
-
     match /users/{userId} {
       allow read: if isAuthenticated()
         && (request.auth.uid == userId || isAdmin());
@@ -53,53 +48,11 @@ service cloud.firestore {
     }
 
     match /events/{eventId} {
-      allow read: if resource.data.status == 'published' || isAdmin();
+      allow read: if (resource.data.status == 'published' && resource.data.published == true) || isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
-    match /rsvps/{rsvpId} {
-      allow create: if request.resource.data.keys().hasOnly([
-          'eventId', 'name', 'phone', 'email', 'guests',
-          'attending', 'message', 'createdAt'
-        ])
-        && request.resource.data.eventId is string
-        && isPublishedEvent(request.resource.data.eventId)
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 120
-        && request.resource.data.phone is string
-        && request.resource.data.phone.size() > 0
-        && request.resource.data.phone.size() <= 40
-        && request.resource.data.email is string
-        && request.resource.data.email.size() <= 254
-        && request.resource.data.guests is int
-        && request.resource.data.guests >= 1
-        && request.resource.data.guests <= 20
-        && request.resource.data.attending in ['attending', 'declined', 'pending']
-        && request.resource.data.message is string
-        && request.resource.data.message.size() <= 1000
-        && request.resource.data.createdAt == request.time;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /guestbook/{entryId} {
-      allow create: if request.resource.data.keys().hasOnly([
-          'eventId', 'name', 'message', 'status', 'createdAt'
-        ])
-        && request.resource.data.eventId is string
-        && isPublishedEvent(request.resource.data.eventId)
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 120
-        && request.resource.data.message is string
-        && request.resource.data.message.size() > 0
-        && request.resource.data.message.size() <= 1000
-        && request.resource.data.status == 'pending'
-        && request.resource.data.createdAt == request.time;
-      allow read: if resource.data.status == 'approved' || isAdmin();
-      allow update, delete: if isAdmin();
-    }
-
+    // Reserved for the future analytics module. The foundation does not write analytics yet.
     match /eventAnalytics/{eventId} {
       allow read, create, update, delete: if isAdmin();
     }
