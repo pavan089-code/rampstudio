@@ -2,10 +2,11 @@
 "use client";
 
 import Button from "@/components/Button";
+import { createBooking } from "@/lib/bookings";
 import Reveal from "@/components/Reveal";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -65,6 +66,8 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState({});
+  const [toast, setToast] = useState("");
+  const submitLock = useRef(false);
 
   const [formData, setFormData] = useState({
     eventType: "Wedding",
@@ -117,6 +120,14 @@ export default function BookingPage() {
 
       if (!formData.email) {
         newErrors.email = "Please share your email so the studio can respond thoughtfully.";
+      } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+        newErrors.email = "Please enter a valid email address.";
+      }
+
+      if (!formData.phone) {
+        newErrors.phone = "Please share a phone number for follow-up.";
+      } else if (formData.phone.replace(/\D/g, "").length < 10) {
+        newErrors.phone = "Please enter a valid phone number.";
       }
     }
 
@@ -138,22 +149,35 @@ export default function BookingPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (submitLock.current || isSubmitting) return;
+    if (!validateStep()) return;
+
+    submitLock.current = true;
     setIsSubmitting(true);
+    setToast("");
 
-    const response = await fetch("/api/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...formData,
-        date: formData.date?.toISOString(),
-      }),
-    });
+    try {
+      await createBooking({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        eventType: formData.eventType,
+        eventDate: formData.date,
+        location: formData.location,
+        package: formData.budget,
+        message: [
+          formData.message,
+          formData.guestCount ? `Guest count: ${formData.guestCount}` : "",
+          formData.photographyStyle
+            ? `Preferred style: ${formData.photographyStyle}`
+            : "",
+          formData.whatsapp ? `WhatsApp: ${formData.whatsapp}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      });
 
-    setIsSubmitting(false);
-
-    if (response.ok) {
+      setToast("Inquiry saved successfully.");
       setIsSuccess(true);
 
       setTimeout(() => {
@@ -173,6 +197,12 @@ export default function BookingPage() {
           message: "",
         });
       }, 2500);
+    } catch (error) {
+      console.error(error);
+      setToast("We could not save your inquiry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+      submitLock.current = false;
     }
   };
 
@@ -253,6 +283,12 @@ export default function BookingPage() {
                 <p className="mt-6 text-sm uppercase tracking-[0.24em] text-white/70">
                   Crafting Your Inquiry
                 </p>
+              </div>
+            )}
+
+            {toast && (
+              <div className="absolute right-5 top-5 z-50 max-w-sm border border-[var(--accent-gold)]/30 bg-black/90 px-5 py-4 text-sm leading-6 text-white shadow-2xl">
+                {toast}
               </div>
             )}
 
@@ -505,6 +541,12 @@ export default function BookingPage() {
                               placeholder="Phone number"
                               className="field-surface w-full px-5 py-4"
                             />
+
+                            {errors.phone && (
+                              <p className="mt-3 text-sm text-[var(--accent-gold)]">
+                                {errors.phone}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -609,6 +651,3 @@ export default function BookingPage() {
     </main>
   );
 }
-
-
-

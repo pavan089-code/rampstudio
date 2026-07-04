@@ -1,0 +1,1 @@
+"use client";import{useParams}from"next/navigation";import AdminLayout from"@/components/admin/AdminLayout";import EventGalleryManager from"@/components/events/admin/EventGalleryManager";export default function GalleryPage(){const{id}=useParams<{id:string}>();return <AdminLayout><EventGalleryManager id={id}/></AdminLayout>}

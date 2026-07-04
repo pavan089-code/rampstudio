@@ -1,0 +1,1 @@
+"use client";import{useParams}from"next/navigation";import AdminLayout from"@/components/admin/AdminLayout";import EventBuilder from"@/components/events/admin/EventBuilder";export default function EditEventPage(){const{id}=useParams<{id:string}>();return <AdminLayout><EventBuilder eventId={id}/></AdminLayout>}

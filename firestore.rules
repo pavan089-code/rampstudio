@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRoleDocument() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function currentUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return hasRoleDocument()
+        && currentUserRole() in ['super_admin', 'admin'];
+    }
+
+    function isSuperAdmin() {
+      return hasRoleDocument()
+        && currentUserRole() == 'super_admin';
+    }
+
+    function isPublishedEvent(eventId) {
+      return exists(/databases/$(database)/documents/events/$(eventId))
+        && get(/databases/$(database)/documents/events/$(eventId)).data.status == 'published';
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated()
+        && (request.auth.uid == userId || isAdmin());
+      allow create, update, delete: if false;
+    }
+
+    match /bookings/{bookingId} {
+      allow read, create, update, delete: if isAdmin();
+
+      match /notes/{noteId} {
+        allow read, create, update, delete: if isAdmin();
+      }
+
+      match /notifications/{notificationId} {
+        allow read, create, update, delete: if isAdmin();
+      }
+    }
+
+    match /settings/{settingId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /rsvps/{rsvpId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          'eventId', 'name', 'phone', 'email', 'guests',
+          'attending', 'message', 'createdAt'
+        ])
+        && request.resource.data.eventId is string
+        && isPublishedEvent(request.resource.data.eventId)
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 40
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.guests is int
+        && request.resource.data.guests >= 1
+        && request.resource.data.guests <= 20
+        && request.resource.data.attending in ['attending', 'declined', 'pending']
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /guestbook/{entryId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          'eventId', 'name', 'message', 'status', 'createdAt'
+        ])
+        && request.resource.data.eventId is string
+        && isPublishedEvent(request.resource.data.eventId)
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+      allow read: if resource.data.status == 'approved' || isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /eventAnalytics/{eventId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,12 +1,16 @@
 "use client";
 
 import Button from "@/components/Button";
+import { createBooking } from "@/lib/bookings";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function BookingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [toast, setToast] = useState("");
+  const [errors, setErrors] = useState({});
+  const submitLock = useRef(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,24 +26,59 @@ export default function BookingForm() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+    setErrors((prev) => ({
+      ...prev,
+      [e.target.name]: "",
+    }));
+  };
+
+  const validateForm = () => {
+    const nextErrors = {};
+
+    if (!formData.name.trim()) nextErrors.name = "Please enter your name.";
+    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      nextErrors.email = "Please enter a valid email address.";
+    }
+    if (formData.phone.replace(/\D/g, "").length < 10) {
+      nextErrors.phone = "Please enter a valid phone number.";
+    }
+    if (!formData.location.trim()) {
+      nextErrors.location = "Please share the event location.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (submitLock.current || isSubmitting) return;
+    if (!validateForm()) return;
+
+    submitLock.current = true;
     setIsSubmitting(true);
+    setToast("");
 
-    const response = await fetch("/api/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
+    try {
+      await createBooking({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        eventType: "General Inquiry",
+        eventDate: null,
+        location: formData.location,
+        package: "To be discussed",
+        message: [
+          formData.message,
+          formData.whatsapp ? `WhatsApp: ${formData.whatsapp}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      });
 
-    setIsSubmitting(false);
-
-    if (response.ok) {
+      setToast("Inquiry saved successfully.");
       setIsSuccess(true);
 
       setFormData({
@@ -50,6 +89,12 @@ export default function BookingForm() {
         location: "",
         message: "",
       });
+    } catch (error) {
+      console.error(error);
+      setToast("We could not save your inquiry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+      submitLock.current = false;
     }
   };
 
@@ -69,36 +114,63 @@ export default function BookingForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <input
-          type="text"
-          name="name"
-          placeholder="Your Name"
-          value={formData.name}
-          onChange={handleChange}
-          className="field-surface w-full px-5 py-4"
-        />
+    <form onSubmit={handleSubmit} className="relative grid gap-6">
+      {toast && (
+        <div className="border border-[var(--accent-gold)]/30 bg-black/80 px-5 py-4 text-sm leading-6 text-white">
+          {toast}
+        </div>
+      )}
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Your Email"
-          value={formData.email}
-          onChange={handleChange}
-          className="field-surface w-full px-5 py-4"
-        />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div>
+          <input
+            type="text"
+            name="name"
+            placeholder="Your Name"
+            value={formData.name}
+            onChange={handleChange}
+            className="field-surface w-full px-5 py-4"
+          />
+          {errors.name && (
+            <p className="mt-2 text-sm text-[var(--accent-gold)]">
+              {errors.name}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <input
+            type="email"
+            name="email"
+            placeholder="Your Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="field-surface w-full px-5 py-4"
+          />
+          {errors.email && (
+            <p className="mt-2 text-sm text-[var(--accent-gold)]">
+              {errors.email}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <input
-          type="text"
-          name="phone"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
-          className="field-surface w-full px-5 py-4"
-        />
+        <div>
+          <input
+            type="text"
+            name="phone"
+            placeholder="Phone Number"
+            value={formData.phone}
+            onChange={handleChange}
+            className="field-surface w-full px-5 py-4"
+          />
+          {errors.phone && (
+            <p className="mt-2 text-sm text-[var(--accent-gold)]">
+              {errors.phone}
+            </p>
+          )}
+        </div>
 
         <input
           type="text"
@@ -110,14 +182,21 @@ export default function BookingForm() {
         />
       </div>
 
-      <input
-        type="text"
-        name="location"
-        placeholder="Event Location"
-        value={formData.location}
-        onChange={handleChange}
-        className="field-surface w-full px-5 py-4"
-      />
+      <div>
+        <input
+          type="text"
+          name="location"
+          placeholder="Event Location"
+          value={formData.location}
+          onChange={handleChange}
+          className="field-surface w-full px-5 py-4"
+        />
+        {errors.location && (
+          <p className="mt-2 text-sm text-[var(--accent-gold)]">
+            {errors.location}
+          </p>
+        )}
+      </div>
 
       <textarea
         name="message"

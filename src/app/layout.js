@@ -4,12 +4,7 @@ import "./globals.css";
 
 import { Geist, Playfair_Display } from "next/font/google";
 
-import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
-import PageTransition from "@/components/PageTransition";
-import WhatsAppButton from "@/components/WhatsappButton";
-import Loader from "@/components/Loader";
-import CinematicGrain from "@/components/CinematicGrains";
+import SiteChrome from "@/components/SiteChrome";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -40,15 +35,7 @@ export default function RootLayout({ children }) {
           antialiased
         `}
       >
-        <Loader />
-        <CinematicGrain />
-        <PageTransition>
-        <WhatsAppButton />
-        <Navbar />
-        <PageTransition>{children}</PageTransition>
-        
-        <Footer />
-        </PageTransition>
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

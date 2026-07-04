@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() { return request.auth != null; }
+
+    match /event-images/{eventId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    match /event-videos/{eventId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 500 * 1024 * 1024
+        && request.resource.contentType.matches('video/.*');
+    }
+    match /event-thumbnails/{eventId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

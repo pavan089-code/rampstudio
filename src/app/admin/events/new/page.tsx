@@ -1,0 +1,1 @@
+import AdminLayout from"@/components/admin/AdminLayout";import EventBuilder from"@/components/events/admin/EventBuilder";export default function NewEventPage(){return <AdminLayout><EventBuilder/></AdminLayout>}
