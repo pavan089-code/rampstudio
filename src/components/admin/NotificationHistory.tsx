@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { subscribeToNotifications } from "@/lib/bookings";
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import type { BookingNotification } from "@/types/notifications";
 
 function formatDate(value: BookingNotification["sentAt"]) {
@@ -23,16 +24,47 @@ export default function NotificationHistory({
   bookingId: string;
 }) {
   const [notifications, setNotifications] = useState<BookingNotification[]>([]);
+  const [error, setError] = useState("");
+  const { status } = useAdminClientAuth();
 
   useEffect(() => {
-    return subscribeToNotifications(bookingId, setNotifications);
-  }, [bookingId]);
+    if (status === "checking") return;
+
+    if (status !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setNotifications([]);
+        setError("Please sign in to load notification history.");
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+
+    return subscribeToNotifications(
+      bookingId,
+      (items) => {
+        setNotifications(items);
+        setError("");
+      },
+      (firestoreError) => {
+        console.error("[admin/bookings/notifications] Firestore listener failed", {
+          code: firestoreError.code,
+          message: firestoreError.message,
+        });
+        setError("Unable to load notification history.");
+      }
+    );
+  }, [bookingId, status]);
 
   return (
     <section className="border border-white/10 bg-white/[0.025] p-5">
       <h3 className="font-serif text-3xl text-white">
         Notification History
       </h3>
+
+      {error && (
+        <p role="alert" className="mt-4 text-sm text-red-200">
+          {error}
+        </p>
+      )}
 
       <div className="mt-5 space-y-3">
         {notifications.length === 0 && (
@@ -72,4 +104,3 @@ export default function NotificationHistory({
     </section>
   );
 }
-

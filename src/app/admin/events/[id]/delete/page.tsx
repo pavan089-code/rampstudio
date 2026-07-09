@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import AdminLayout from "@/components/admin/AdminLayout";
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import { EventService } from "@/lib/events";
 
 export default function DeleteEventPage() {
@@ -15,15 +16,31 @@ export default function DeleteEventPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const { status } = useAdminClientAuth();
 
   useEffect(() => {
+    if (status === "checking") return;
+
+    if (status !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setError("Please sign in to load this event.");
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+
     EventService.getById(id)
       .then((event) => event ? setTitle(event.title) : setError("Event not found."))
       .catch(() => setError("Unable to load this event."))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, status]);
 
   async function removeEvent() {
+    if (status !== "authenticated") {
+      setError("Please sign in before deleting this event.");
+      return;
+    }
+
     setDeleting(true);
     setError("");
     try {

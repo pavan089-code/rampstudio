@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import {
   createEmptyEvent,
   EVENT_STATUS_OPTIONS,
@@ -49,9 +50,19 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [slugEdited, setSlugEdited] = useState(Boolean(eventId));
+  const { status } = useAdminClientAuth();
 
   useEffect(() => {
     if (!eventId) return;
+    if (status === "checking") return;
+
+    if (status !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setSaveError("Please sign in to load this event.");
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
 
     EventService.getById(eventId)
       .then((record) => {
@@ -64,7 +75,7 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
       })
       .catch(() => setSaveError("Unable to load this event."))
       .finally(() => setLoading(false));
-  }, [eventId]);
+  }, [eventId, status]);
 
   function update<K extends keyof EventInput>(key: K, value: EventInput[K]) {
     setEvent((current) => ({ ...current, [key]: value }));
@@ -82,6 +93,11 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
 
   async function handleSubmit(submitEvent: FormEvent<HTMLFormElement>) {
     submitEvent.preventDefault();
+    if (status !== "authenticated") {
+      setSaveError("Please sign in before saving this event.");
+      return;
+    }
+
     const nextErrors = validateEvent(event);
     setErrors(nextErrors);
     setSaveError("");

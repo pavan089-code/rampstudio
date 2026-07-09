@@ -4,6 +4,7 @@ import { Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import AdminLayout from "@/components/admin/AdminLayout";
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import {
   getStudioSettings,
   saveStudioSettings,
@@ -15,16 +16,34 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const { status } = useAdminClientAuth();
 
   useEffect(() => {
+    if (status === "checking") return;
+
+    if (status !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setSettings(null);
+        setLoading(false);
+        setMessage("Please sign in to load settings.");
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+
     async function loadSettings() {
-      const result = await getStudioSettings();
-      setSettings(result);
-      setLoading(false);
+      try {
+        const result = await getStudioSettings();
+        setSettings(result);
+        setMessage("");
+      } catch {
+        setMessage("Unable to load settings.");
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadSettings();
-  }, []);
+  }, [status]);
 
   const updateField = (field: keyof StudioSettings, value: string) => {
     if (!settings) return;

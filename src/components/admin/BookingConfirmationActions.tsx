@@ -3,7 +3,6 @@
 import { Copy, Mail, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
 
-import { auth } from "@/lib/firebase";
 import {
   createWhatsAppLink,
   generateWhatsAppConfirmationMessage,
@@ -22,16 +21,9 @@ export async function sendBookingConfirmationRequest(
   bookingId: string,
   action: ConfirmationAction
 ) {
-  const token = await auth.currentUser?.getIdToken();
-
-  if (!token) {
-    throw new Error("Admin session expired. Please sign in again.");
-  }
-
   const response = await fetch(`/api/admin/bookings/${bookingId}/confirmation`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ action }),

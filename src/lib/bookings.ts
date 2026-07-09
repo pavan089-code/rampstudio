@@ -12,6 +12,7 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  type FirestoreError,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -65,17 +66,23 @@ export async function createBooking(input: BookingFormInput) {
   return response.json() as Promise<{ accepted: true }>;
 }
 
-export function subscribeToBookings(onNext: (bookings: Booking[]) => void) {
+type FirestoreSubscriptionErrorHandler = (error: FirestoreError) => void;
+
+export function subscribeToBookings(
+  onNext: (bookings: Booking[]) => void,
+  onError?: FirestoreSubscriptionErrorHandler
+) {
   const bookingsQuery = query(bookingsCollection, orderBy("createdAt", "desc"));
 
   return onSnapshot(bookingsQuery, (snapshot) => {
     onNext(snapshot.docs.map((item) => normalizeBooking(item.id, item.data())));
-  });
+  }, onError);
 }
 
 export function subscribeToRecentBookings(
   count: number,
-  onNext: (bookings: Booking[]) => void
+  onNext: (bookings: Booking[]) => void,
+  onError?: FirestoreSubscriptionErrorHandler
 ) {
   const bookingsQuery = query(
     bookingsCollection,
@@ -85,7 +92,7 @@ export function subscribeToRecentBookings(
 
   return onSnapshot(bookingsQuery, (snapshot) => {
     onNext(snapshot.docs.map((item) => normalizeBooking(item.id, item.data())));
-  });
+  }, onError);
 }
 
 export async function getBookingById(id: string) {
@@ -121,7 +128,8 @@ export async function updateBookingStatus(id: string, status: BookingStatus) {
 
 export function subscribeToNotes(
   bookingId: string,
-  onNext: (notes: LeadNote[]) => void
+  onNext: (notes: LeadNote[]) => void,
+  onError?: FirestoreSubscriptionErrorHandler
 ) {
   const notesQuery = query(
     collection(db, "bookings", bookingId, "notes"),
@@ -136,7 +144,7 @@ export function subscribeToNotes(
         createdAt: (item.data().createdAt as Timestamp | null) || null,
       }))
     );
-  });
+  }, onError);
 }
 
 export async function addLeadNote(bookingId: string, content: string) {
@@ -162,7 +170,8 @@ export async function deleteLeadNote(bookingId: string, noteId: string) {
 
 export function subscribeToNotifications(
   bookingId: string,
-  onNext: (notifications: BookingNotification[]) => void
+  onNext: (notifications: BookingNotification[]) => void,
+  onError?: FirestoreSubscriptionErrorHandler
 ) {
   const notificationsQuery = query(
     collection(db, "bookings", bookingId, "notifications"),
@@ -179,7 +188,7 @@ export function subscribeToNotifications(
         message: String(item.data().message || ""),
       }))
     );
-  });
+  }, onError);
 }
 
 export async function markWhatsAppOpened(bookingId: string, message: string) {

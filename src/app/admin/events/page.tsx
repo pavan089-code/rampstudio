@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import AdminLayout from "@/components/admin/AdminLayout";
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import { EventService } from "@/lib/events";
 import type { Event, EventStatus } from "@/types/event";
 
@@ -13,8 +14,30 @@ export default function EventsAdminPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | EventStatus>("all");
   const [error, setError] = useState("");
+  const { status: authStatus } = useAdminClientAuth();
 
-  useEffect(() => EventService.subscribe(setEvents, () => setError("Unable to load events.")), []);
+  useEffect(() => {
+    if (authStatus === "checking") return;
+
+    if (authStatus !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setEvents([]);
+        setError("Please sign in to load events.");
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+
+    return EventService.subscribe((items) => {
+      setEvents(items);
+      setError("");
+    }, (firestoreError) => {
+      console.error("[admin/events] Firestore listener failed", {
+        code: "code" in firestoreError ? firestoreError.code : undefined,
+        message: firestoreError.message,
+      });
+      setError("Unable to load events.");
+    });
+  }, [authStatus]);
 
   const visibleEvents = useMemo(() => {
     const term = search.trim().toLowerCase();

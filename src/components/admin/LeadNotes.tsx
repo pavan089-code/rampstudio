@@ -9,6 +9,7 @@ import {
   subscribeToNotes,
   updateLeadNote,
 } from "@/lib/bookings";
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import type { LeadNote } from "@/types/booking";
 
 function formatDate(value: LeadNote["createdAt"]) {
@@ -29,31 +30,75 @@ export default function LeadNotes({ bookingId }: { bookingId: string }) {
   const [editingId, setEditingId] = useState("");
   const [editingContent, setEditingContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+  const { status } = useAdminClientAuth();
 
   useEffect(() => {
-    return subscribeToNotes(bookingId, setNotes);
-  }, [bookingId]);
+    if (status === "checking") return;
+
+    if (status !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setNotes([]);
+        setError("Please sign in to load lead notes.");
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+
+    return subscribeToNotes(
+      bookingId,
+      (items) => {
+        setNotes(items);
+        setError("");
+      },
+      (firestoreError) => {
+        console.error("[admin/bookings/notes] Firestore listener failed", {
+          code: firestoreError.code,
+          message: firestoreError.message,
+        });
+        setError("Unable to load lead notes.");
+      }
+    );
+  }, [bookingId, status]);
 
   const handleAddNote = async () => {
     if (!content.trim() || isSaving) return;
 
     setIsSaving(true);
-    await addLeadNote(bookingId, content);
-    setContent("");
-    setIsSaving(false);
+    setError("");
+
+    try {
+      await addLeadNote(bookingId, content);
+      setContent("");
+    } catch {
+      setError("Unable to save this note.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUpdateNote = async (noteId: string) => {
     if (!editingContent.trim()) return;
 
-    await updateLeadNote(bookingId, noteId, editingContent);
-    setEditingId("");
-    setEditingContent("");
+    setError("");
+
+    try {
+      await updateLeadNote(bookingId, noteId, editingContent);
+      setEditingId("");
+      setEditingContent("");
+    } catch {
+      setError("Unable to update this note.");
+    }
   };
 
   return (
     <section className="border border-white/10 bg-white/[0.025] p-5">
       <h2 className="font-serif text-3xl text-white">Lead Notes</h2>
+
+      {error && (
+        <p role="alert" className="mt-4 text-sm text-red-200">
+          {error}
+        </p>
+      )}
 
       <div className="mt-5 grid gap-3">
         <textarea
@@ -148,4 +193,3 @@ export default function LeadNotes({ bookingId }: { bookingId: string }) {
     </section>
   );
 }
-

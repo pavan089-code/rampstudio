@@ -8,6 +8,7 @@ import { getAdminAuth } from "@/lib/firebase-admin";
 import {
   ensureUserRoleDocument,
   isAdminRole,
+  RbacAuthorizationError,
 } from "@/lib/rbac-admin";
 
 export const runtime = "nodejs";
@@ -41,6 +42,10 @@ function logFirebaseError(error: unknown, phase: string) {
   });
 }
 
+function logSessionStage(phase: string, details?: Record<string, boolean | string>) {
+  console.info(`[admin/session] ${phase}`, details);
+}
+
 export async function POST(request: NextRequest) {
   let phase = "request validation";
 
@@ -55,8 +60,16 @@ export async function POST(request: NextRequest) {
     }
 
     const adminAuth = getAdminAuth();
+    logSessionStage("admin initialization complete", {
+      hasPublicProjectId: Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+      hasAdminProjectId: Boolean(process.env.FIREBASE_PROJECT_ID),
+      projectIdsMatch:
+        Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) &&
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID === process.env.FIREBASE_PROJECT_ID,
+    });
     phase = "verifyIdToken";
     const decodedToken = await adminAuth.verifyIdToken(idToken, true);
+    logSessionStage("ID token verified");
 
     if (!decodedToken.uid || decodedToken.sub !== decodedToken.uid) {
       return NextResponse.json(
@@ -81,6 +94,7 @@ export async function POST(request: NextRequest) {
 
     phase = "RBAC provisioning";
     const role = await ensureUserRoleDocument(decodedToken);
+    logSessionStage("RBAC verified", { role });
 
     if (!isAdminRole(role)) {
       return NextResponse.json(
@@ -93,6 +107,7 @@ export async function POST(request: NextRequest) {
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn: ADMIN_SESSION_MAX_AGE * 1000,
     });
+    logSessionStage("session cookie created");
     const response = NextResponse.json({ success: true });
     response.cookies.set(ADMIN_SESSION_COOKIE, sessionCookie, {
       httpOnly: true,
@@ -107,17 +122,20 @@ export async function POST(request: NextRequest) {
     logFirebaseError(error, phase);
     const details = getFirebaseErrorDetails(error);
     const isConfigurationError = details.code === "auth/admin-configuration";
+    const isAuthorizationError = error instanceof RbacAuthorizationError;
 
     return NextResponse.json(
       {
         error:
           process.env.NODE_ENV === "development"
             ? `${details.code ? `${details.code}: ` : ""}${details.message}`
+            : isAuthorizationError
+              ? "This Firebase account does not have admin access."
             : isConfigurationError
               ? "The secure admin session is not configured."
               : "Unable to authenticate this Firebase account.",
       },
-      { status: isConfigurationError ? 500 : 401 }
+      { status: isConfigurationError ? 500 : isAuthorizationError ? 403 : 401 }
     );
   }
 }

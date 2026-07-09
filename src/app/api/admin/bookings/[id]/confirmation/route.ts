@@ -2,7 +2,9 @@ import { FieldValue } from "firebase-admin/firestore";
 import { NextRequest, NextResponse } from "next/server";
 
 import { sendBookingConfirmationEmail } from "@/lib/email/sendBookingConfirmation";
-import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
+import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyAdminSession } from "@/lib/admin-auth";
 import { assertAdminRole } from "@/lib/rbac-admin";
 import { defaultStudioSettings } from "@/lib/studioDefaults";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
@@ -12,14 +14,16 @@ import type {
   StudioSettings,
 } from "@/types/notifications";
 
-async function assertAdmin(request: NextRequest) {
-  const token = request.headers.get("authorization")?.replace("Bearer ", "");
+export const runtime = "nodejs";
 
-  if (!token) {
-    throw new Error("Missing admin token.");
+async function assertAdmin(request: NextRequest) {
+  const sessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+  const decodedToken = await verifyAdminSession(sessionCookie);
+
+  if (!decodedToken) {
+    throw new Error("Missing or invalid admin session.");
   }
 
-  const decodedToken = await getAdminAuth().verifyIdToken(token);
   await assertAdminRole(decodedToken.uid);
   return decodedToken;
 }

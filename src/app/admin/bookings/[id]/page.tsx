@@ -13,6 +13,7 @@ import BookingConfirmationActions, {
 import LeadNotes from "@/components/admin/LeadNotes";
 import NotificationHistory from "@/components/admin/NotificationHistory";
 import StatusBadge from "@/components/admin/StatusBadge";
+import { useAdminClientAuth } from "@/hooks/useAuth";
 import { getBookingById, updateBookingStatus } from "@/lib/bookings";
 import {
   BOOKING_STATUSES,
@@ -43,19 +44,40 @@ export default function BookingDetailPage() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const { status } = useAdminClientAuth();
 
   const refreshBooking = async () => {
+    if (status !== "authenticated") return;
+
     const result = await getBookingById(params.id);
     setBooking(result);
   };
 
   useEffect(() => {
+    if (status === "checking") return;
+
+    if (status !== "authenticated") {
+      const timeout = window.setTimeout(() => {
+        setBooking(null);
+        setLoading(false);
+        setError(
+          status === "unauthorized"
+            ? "This Firebase account does not have admin access."
+            : "Please sign in to load this booking."
+        );
+      }, 0);
+      return () => window.clearTimeout(timeout);
+    }
+
     let isMounted = true;
 
     async function loadBooking() {
       try {
         const result = await getBookingById(params.id);
-        if (isMounted) setBooking(result);
+        if (isMounted) {
+          setBooking(result);
+          setError("");
+        }
       } catch {
         if (isMounted) setError("Unable to load this booking.");
       } finally {
@@ -68,7 +90,7 @@ export default function BookingDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [params.id]);
+  }, [params.id, status]);
 
   const handleStatusChange = async (status: BookingStatus) => {
     if (!booking || status === booking.status) return;
