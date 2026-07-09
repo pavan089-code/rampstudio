@@ -5,7 +5,7 @@ import { sendBookingConfirmationEmail } from "@/lib/email/sendBookingConfirmatio
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyAdminSession } from "@/lib/admin-auth";
-import { assertAdminRole } from "@/lib/rbac-admin";
+import { assertAdminRole, RbacAuthorizationError } from "@/lib/rbac-admin";
 import { defaultStudioSettings } from "@/lib/studioDefaults";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import type { Booking } from "@/types/booking";
@@ -16,12 +16,19 @@ import type {
 
 export const runtime = "nodejs";
 
+class AdminApiAuthenticationError extends Error {
+  constructor(message = "Missing or invalid admin session.") {
+    super(message);
+    this.name = "AdminApiAuthenticationError";
+  }
+}
+
 async function assertAdmin(request: NextRequest) {
   const sessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   const decodedToken = await verifyAdminSession(sessionCookie);
 
   if (!decodedToken) {
-    throw new Error("Missing or invalid admin session.");
+    throw new AdminApiAuthenticationError();
   }
 
   await assertAdminRole(decodedToken.uid);
@@ -199,15 +206,26 @@ export async function POST(
       whatsappUrl: whatsappResult.link,
     });
   } catch (error) {
+    const status =
+      error instanceof AdminApiAuthenticationError
+        ? 401
+        : error instanceof RbacAuthorizationError
+          ? 403
+          : 500;
+
     return NextResponse.json(
       {
         success: false,
         error:
-          error instanceof Error
+          error instanceof AdminApiAuthenticationError
+            ? "Authentication is required."
+            : error instanceof RbacAuthorizationError
+              ? "Admin authorization failed."
+              : error instanceof Error
             ? error.message
             : "Unable to send confirmation.",
       },
-      { status: 500 }
+      { status }
     );
   }
 }
