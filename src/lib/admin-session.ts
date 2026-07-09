@@ -3,6 +3,24 @@ import type { User } from "firebase/auth";
 export const ADMIN_SESSION_COOKIE = "ramp_admin_session";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
+type AdminSessionErrorPayload = {
+  ok?: false;
+  code?: string;
+  message?: string;
+  error?: string;
+};
+
+export class AdminSessionError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string
+  ) {
+    super(message);
+    this.name = "AdminSessionError";
+  }
+}
+
 export async function createAdminSession(user: User) {
   const tokenResult = await user.getIdTokenResult(true);
   const idToken = tokenResult.token;
@@ -24,9 +42,20 @@ export async function createAdminSession(user: User) {
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as
-      | { error?: string }
+      | AdminSessionErrorPayload
       | null;
-    throw new Error(payload?.error || "Unable to create the admin session.");
+    const message =
+      payload?.message ||
+      payload?.error ||
+      "Unable to create the admin session.";
+
+    console.error("[admin/session] Session request failed", {
+      status: response.status,
+      code: payload?.code,
+      message,
+    });
+
+    throw new AdminSessionError(message, response.status, payload?.code);
   }
 }
 

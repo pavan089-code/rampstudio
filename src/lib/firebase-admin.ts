@@ -6,7 +6,7 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const ADMIN_APP_NAME = "ramp-studio-admin";
 
-class FirebaseAdminConfigurationError extends Error {
+export class FirebaseAdminConfigurationError extends Error {
   readonly code = "auth/admin-configuration";
 
   constructor(message: string) {
@@ -15,11 +15,34 @@ class FirebaseAdminConfigurationError extends Error {
   }
 }
 
+function normalizeEnvString(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
+}
+
+function normalizePrivateKey(value: string | undefined) {
+  const unquoted = normalizeEnvString(value);
+  if (!unquoted) return undefined;
+
+  return unquoted.replace(/\\n/g, "\n").replace(/\r\n/g, "\n");
+}
+
 function getAdminCredentials() {
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  const publicProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const projectId = normalizeEnvString(process.env.FIREBASE_PROJECT_ID);
+  const clientEmail = normalizeEnvString(process.env.FIREBASE_CLIENT_EMAIL);
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+  const publicProjectId = normalizeEnvString(
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  );
 
   const missing = [
     ["FIREBASE_PROJECT_ID", projectId],
@@ -38,6 +61,18 @@ function getAdminCredentials() {
   if (publicProjectId && publicProjectId !== projectId) {
     throw new FirebaseAdminConfigurationError(
       "FIREBASE_PROJECT_ID does not match NEXT_PUBLIC_FIREBASE_PROJECT_ID."
+    );
+  }
+
+  if (!privateKey.includes("-----BEGIN PRIVATE KEY-----")) {
+    throw new FirebaseAdminConfigurationError(
+      "FIREBASE_PRIVATE_KEY is not a valid service account private key."
+    );
+  }
+
+  if (!privateKey.includes("-----END PRIVATE KEY-----")) {
+    throw new FirebaseAdminConfigurationError(
+      "FIREBASE_PRIVATE_KEY is missing its private key footer."
     );
   }
 
