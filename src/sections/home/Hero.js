@@ -12,7 +12,9 @@ export default function Hero() {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
+          poster="/marraige/hero.jpeg"
+          aria-hidden="true"
           className="h-full w-full object-cover object-center opacity-90"
         >
           <source src="/herovideo.mp4" type="video/mp4" />

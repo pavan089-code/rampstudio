@@ -1,18 +1,23 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export default function PageTransition({ children }) {
   const pathname = usePathname();
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     window.scrollTo({
       top: 0,
-      behavior: "instant",
+      behavior: "auto",
     });
   }, [pathname]);
+
+  if (prefersReducedMotion) {
+    return <div className="relative">{children}</div>;
+  }
 
   return (
     <AnimatePresence mode="wait" initial={false}>

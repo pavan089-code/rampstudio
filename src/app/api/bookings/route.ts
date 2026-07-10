@@ -2,9 +2,13 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 import type { BookingFormInput } from "@/types/booking";
 
 export const runtime = "nodejs";
+
+const MAX_BODY_BYTES = 12 * 1024;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 
 const MAX_LENGTHS = {
   name: 120,
@@ -22,7 +26,33 @@ function cleanString(value: unknown, maxLength: number) {
 
 export async function POST(request: NextRequest) {
   try {
+    const contentLength = Number(request.headers.get("content-length") || "0");
+    if (contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Invalid booking inquiry." }, { status: 413 });
+    }
+
+    const ip = getRequestIp(request.headers);
+    const limit = checkRateLimit({
+      key: `booking:${ip}`,
+      limit: 5,
+      windowMs: RATE_LIMIT_WINDOW_MS,
+    });
+
+    if (!limit.allowed) {
+      return NextResponse.json({ error: "Please wait before submitting another inquiry." }, { status: 429 });
+    }
+
     const input = (await request.json()) as Partial<BookingFormInput>;
+    const honeypot = cleanString(
+      (input as Partial<BookingFormInput> & { website?: unknown; company?: unknown }).website ||
+        (input as Partial<BookingFormInput> & { website?: unknown; company?: unknown }).company,
+      200
+    );
+
+    if (honeypot) {
+      return NextResponse.json({ accepted: true });
+    }
+
     const name = cleanString(input.name, MAX_LENGTHS.name);
     const email = cleanString(input.email, MAX_LENGTHS.email).toLowerCase();
     const phone = cleanString(input.phone, MAX_LENGTHS.phone);

@@ -23,12 +23,10 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
     <>
       <Loader />
       <CinematicGrain />
-      <PageTransition>
-        <WhatsAppButton />
-        <Navbar />
-        <PageTransition>{children}</PageTransition>
-        <Footer />
-      </PageTransition>
+      <WhatsAppButton />
+      <Navbar />
+      <PageTransition>{children}</PageTransition>
+      <Footer />
     </>
   );
 }

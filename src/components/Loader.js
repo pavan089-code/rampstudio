@@ -7,11 +7,26 @@ export default function Loader() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let loadTimer;
+    const fallbackTimer = setTimeout(() => {
       setLoading(false);
-    }, 1800);
+    }, 850);
 
-    return () => clearTimeout(timer);
+    const handleLoaded = () => {
+      loadTimer = setTimeout(() => setLoading(false), 120);
+    };
+
+    if (document.readyState === "complete") {
+      handleLoaded();
+    } else {
+      window.addEventListener("load", handleLoaded, { once: true });
+    }
+
+    return () => {
+      clearTimeout(fallbackTimer);
+      clearTimeout(loadTimer);
+      window.removeEventListener("load", handleLoaded);
+    };
   }, []);
 
   return (

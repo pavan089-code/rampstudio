@@ -9,7 +9,6 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   Timestamp,
   updateDoc,
   type FirestoreError,
@@ -189,26 +188,4 @@ export function subscribeToNotifications(
       }))
     );
   }, onError);
-}
-
-export async function markWhatsAppOpened(bookingId: string, message: string) {
-  const timestamp = serverTimestamp();
-
-  await Promise.all([
-    setDoc(
-      doc(db, "bookings", bookingId),
-      {
-        whatsappSent: true,
-        whatsappSentAt: timestamp,
-        updatedAt: timestamp,
-      },
-      { merge: true }
-    ),
-    addDoc(collection(db, "bookings", bookingId, "notifications"), {
-      type: "whatsapp",
-      status: "success",
-      sentAt: timestamp,
-      message,
-    }),
-  ]);
 }

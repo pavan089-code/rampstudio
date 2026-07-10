@@ -15,12 +15,14 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
-import { eventConverter } from "@/lib/events/converter";
+import { eventConverter, normalizeEventDocument } from "@/lib/events/converter";
+import { EventGalleryService } from "@/lib/events/gallery-service";
 import { generateEventSlug, hasEventValidationErrors, validateEvent } from "@/lib/events/validation";
 import type { Event, EventDocument, EventInput } from "@/types/event";
 
 export const EVENTS_COLLECTION = "events";
 export const EVENT_ANALYTICS_COLLECTION = "eventAnalytics";
+export const EVENT_ANNOUNCEMENTS_COLLECTION = "announcements";
 
 const eventsCollection = collection(db, EVENTS_COLLECTION).withConverter(eventConverter);
 
@@ -36,19 +38,92 @@ async function assertUniqueSlug(slug: string, currentId?: string): Promise<void>
 }
 
 function prepareInput(input: EventInput): EventInput {
+  const normalized = normalizeEventDocument(input);
+  const trim = (value: string) => value.trim();
+  const startDateTime = normalized.eventDate ? [normalized.eventDate, normalized.eventTime].filter(Boolean).join("T") : trim(normalized.lifecycle.startDateTime);
+  const endDateTime = normalized.eventEndDate ? [normalized.eventEndDate, normalized.eventEndTime].filter(Boolean).join("T") : trim(normalized.lifecycle.endDateTime);
+
   return {
-    ...input,
-    title: input.title.trim(),
-    slug: generateEventSlug(input.slug || input.title),
-    eventType: input.eventType.trim(),
-    venue: input.venue.trim(),
-    mapLink: input.mapLink.trim(),
-    theme: input.theme.trim(),
-    heroImage: input.heroImage.trim(),
-    coverVideo: input.coverVideo.trim(),
-    metaTitle: input.metaTitle.trim(),
-    metaDescription: input.metaDescription.trim(),
-    ogImage: input.ogImage.trim(),
+    title: trim(normalized.title),
+    slug: generateEventSlug(normalized.slug || normalized.title),
+    eventType: trim(normalized.eventType),
+    status: normalized.status,
+    eventDate: trim(normalized.eventDate),
+    eventTime: trim(normalized.eventTime),
+    eventEndDate: trim(normalized.eventEndDate),
+    eventEndTime: trim(normalized.eventEndTime),
+    timezone: trim(normalized.timezone),
+    venue: trim(normalized.venue),
+    mapLink: trim(normalized.mapLink),
+    theme: trim(normalized.theme),
+    published: normalized.published,
+    heroImage: trim(normalized.heroImage),
+    coverVideo: trim(normalized.coverVideo),
+    presentation: {
+      eyebrow: trim(normalized.presentation.eyebrow),
+      headline: trim(normalized.presentation.headline),
+      subtitle: trim(normalized.presentation.subtitle),
+      message: trim(normalized.presentation.message),
+      story: trim(normalized.presentation.story),
+      primaryCtaLabel: trim(normalized.presentation.primaryCtaLabel),
+    },
+    hosts: normalized.hosts
+      .map((host, index) => ({
+        id: host.id || `host-${index + 1}`,
+        name: trim(host.name),
+        role: trim(host.role),
+        description: trim(host.description),
+        image: trim(host.image),
+        order: index,
+      }))
+      .filter((host) => host.name || host.role || host.description || host.image),
+    schedule: normalized.schedule
+      .map((item, index) => ({
+        id: item.id || `schedule-${index + 1}`,
+        title: trim(item.title),
+        description: trim(item.description),
+        date: trim(item.date),
+        startTime: trim(item.startTime),
+        endTime: trim(item.endTime),
+        location: trim(item.location),
+        order: index,
+      }))
+      .filter((item) => item.title || item.description || item.date || item.startTime || item.endTime || item.location),
+    venueDetails: {
+      name: trim(normalized.venueDetails.name),
+      address: trim(normalized.venueDetails.address),
+      city: trim(normalized.venueDetails.city),
+      mapLink: trim(normalized.venueDetails.mapLink),
+      note: trim(normalized.venueDetails.note),
+    },
+    sections: normalized.sections,
+    lifecycle: {
+      mode: normalized.lifecycle.mode,
+      timezone: trim(normalized.lifecycle.timezone),
+      startDateTime: trim(startDateTime),
+      endDateTime: trim(endDateTime),
+    },
+    media: {
+      galleryEnabled: normalized.media.galleryEnabled,
+      galleryStatus: normalized.media.galleryStatus,
+      galleryCoverImage: trim(normalized.media.galleryCoverImage),
+      livestreamEnabled: normalized.media.livestreamEnabled,
+      livestreamProvider: normalized.media.livestreamProvider,
+      livestreamUrl: trim(normalized.media.livestreamUrl),
+      livestreamLabel: trim(normalized.media.livestreamLabel),
+      livestreamTitle: trim(normalized.media.livestreamTitle),
+      livestreamDescription: trim(normalized.media.livestreamDescription),
+      livestreamStartDateTime: trim(normalized.media.livestreamStartDateTime),
+      livestreamEndDateTime: trim(normalized.media.livestreamEndDateTime),
+      livestreamStatus: normalized.media.livestreamStatus,
+      livestreamFallbackMessage: trim(normalized.media.livestreamFallbackMessage),
+      livestreamReplayEnabled: normalized.media.livestreamReplayEnabled,
+      highlightsEnabled: normalized.media.highlightsEnabled,
+      highlightVideoUrl: trim(normalized.media.highlightVideoUrl),
+    },
+    metaTitle: trim(normalized.metaTitle),
+    metaDescription: trim(normalized.metaDescription),
+    ogImage: trim(normalized.ogImage),
   };
 }
 
@@ -108,7 +183,10 @@ export const EventService = {
   },
 
   async delete(id: string): Promise<void> {
+    await EventGalleryService.deleteAll(id);
+    const announcements = await getDocs(collection(db, EVENTS_COLLECTION, id, EVENT_ANNOUNCEMENTS_COLLECTION));
     const batch = writeBatch(db);
+    announcements.docs.forEach((announcement) => batch.delete(announcement.ref));
     batch.delete(doc(db, EVENTS_COLLECTION, id));
     batch.delete(doc(db, EVENT_ANALYTICS_COLLECTION, id));
     await batch.commit();

@@ -2,7 +2,42 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    function isAdmin() { return request.auth != null; }
+    function hasRoleDocument() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function currentUserRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return hasRoleDocument()
+        && currentUserRole() in ['super_admin', 'admin'];
+    }
+
+    function isPublishedEvent(eventId) {
+      return firestore.exists(/databases/(default)/documents/events/$(eventId))
+        && firestore.get(/databases/(default)/documents/events/$(eventId)).data.status == 'published'
+        && firestore.get(/databases/(default)/documents/events/$(eventId)).data.published == true;
+    }
+
+    function isVisibleGalleryMedia(eventId, mediaId) {
+      return firestore.exists(/databases/(default)/documents/events/$(eventId)/gallery/$(mediaId))
+        && firestore.get(/databases/(default)/documents/events/$(eventId)/gallery/$(mediaId)).data.visible == true;
+    }
+
+    function isSupportedGalleryImage() {
+      return request.resource.size > 0
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp|avif)');
+    }
+
+    match /events/{eventId}/gallery/{mediaId}/{fileName} {
+      allow read: if isAdmin() || (isPublishedEvent(eventId) && isVisibleGalleryMedia(eventId, mediaId));
+      allow create, update: if isAdmin() && isSupportedGalleryImage();
+      allow delete: if isAdmin();
+    }
 
     match /event-images/{eventId}/{fileName} {
       allow read: if true;

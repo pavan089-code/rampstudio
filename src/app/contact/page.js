@@ -1,5 +1,3 @@
-"use client";
-
 import Reveal from "@/components/Reveal";
 
 export default function ContactPage() {

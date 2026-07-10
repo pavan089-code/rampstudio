@@ -120,7 +120,6 @@ export default function GalleryLightbox({
                     sizes="100vw"
                     className="object-contain"
                     quality={90}
-                    preload
                   />
                 </motion.div>
               </AnimatePresence>

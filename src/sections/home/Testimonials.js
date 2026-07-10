@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import Image from "next/image";
+import { useRef } from "react";
 
 const testimonials = [
   {
@@ -31,6 +32,11 @@ const testimonials = [
 ];
 
 export default function Testimonials() {
+  const railRef = useRef(null);
+  const railInView = useInView(railRef, { margin: "240px 0px" });
+  const prefersReducedMotion = useReducedMotion();
+  const shouldAnimateRail = railInView && !prefersReducedMotion;
+
   return (
     <section className="relative bg-black text-white overflow-hidden py-28 md:py-40">
       {/* Ambient glow */}
@@ -62,7 +68,8 @@ export default function Testimonials() {
         {/* Marquee Rail */}
         <div className="relative overflow-hidden">
           <motion.div
-            animate={{ x: ["0%", "-50%"] }}
+            ref={railRef}
+            animate={shouldAnimateRail ? { x: ["0%", "-50%"] } : { x: "0%" }}
             transition={{
               duration: 30,
               repeat: Infinity,

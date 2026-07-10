@@ -65,6 +65,7 @@ function logSessionStage(
   stage: AdminSessionStage,
   details?: Record<string, boolean | string>
 ) {
+  if (process.env.NODE_ENV !== "development") return;
   console.info(`[admin/session] ${stage}`, details);
 }
 
