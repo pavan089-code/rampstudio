@@ -34,18 +34,6 @@ html {
   --border-subtle: rgba(255,255,255,0.08);
 }
 
-/* Tailwind Theme Mapping */
-@theme inline {
-  --color-background: var(--bg-primary);
-  --color-foreground: var(--text-primary);
-
-  --color-muted: var(--text-secondary);
-  --color-accent: var(--accent-gold);
-
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 /* Base Body */
 body {
   background-color: var(--bg-primary);

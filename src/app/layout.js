@@ -2,19 +2,24 @@
 
 import "./globals.css";
 
-import { Geist, Playfair_Display } from "next/font/google";
+import localFont from "next/font/local";
 
 import SiteChrome from "@/components/SiteChrome";
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "600"],
+const playfair = localFont({
+  src: "./fonts/PlayfairDisplay-Variable.ttf",
+  weight: "400 900",
+  style: "normal",
   variable: "--font-playfair",
+  display: "swap",
 });
 
-const geist = Geist({
-  subsets: ["latin"],
+const geist = localFont({
+  src: "./fonts/Geist-Variable.ttf",
+  weight: "100 900",
+  style: "normal",
   variable: "--font-geist-sans",
+  display: "swap",
 });
 
 export const metadata = {

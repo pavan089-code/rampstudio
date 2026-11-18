@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { auth } from "@/lib/firebase";
 import { createAdminSession } from "@/lib/admin-session";
+import { portfolioAsset } from "@/lib/portfolio-assets";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function AdminLoginPage() {
 
   return (
     <main className="grid min-h-screen bg-primary px-5 py-12 text-white md:grid-cols-[0.95fr_1.05fr] md:px-0 md:py-0">
-      <section className="hidden border-r border-white/10 bg-[url('/marraige/hero.jpeg')] bg-cover bg-center md:block">
+      <section className="hidden border-r border-white/10 bg-cover bg-center md:block" style={{ backgroundImage: `url("${portfolioAsset("/marraige/hero.jpeg")}")` }}>
         <div className="flex h-full flex-col justify-end bg-black/55 p-12">
           <p className="text-xs uppercase tracking-[0.24em] text-[var(--accent-gold)]">
             Ramp Studio

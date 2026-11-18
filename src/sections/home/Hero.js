@@ -1,6 +1,7 @@
 import Button from "@/components/Button";
 import Reveal from "../../components/Reveal";
 import Link from "next/link";
+import { portfolioAsset } from "@/lib/portfolio-assets";
 
 export default function Hero() {
   return (
@@ -13,7 +14,7 @@ export default function Hero() {
           loop
           playsInline
           preload="metadata"
-          poster="/marraige/hero.jpeg"
+          poster={portfolioAsset("/marraige/hero.jpeg")}
           aria-hidden="true"
           className="h-full w-full object-cover object-center opacity-90"
         >

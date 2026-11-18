@@ -42,6 +42,14 @@ export const getPublicEventBySlug = cache(async (slug: string): Promise<Event | 
   };
 });
 
+export const getPublicEventSlugById = cache(async (eventId: string): Promise<string | null> => {
+  const snapshot = await getAdminDb().collection("events").doc(eventId).get();
+  const data = snapshot.data();
+  return data?.published === true && data.status === "published" && typeof data.slug === "string" && data.slug
+    ? data.slug
+    : null;
+});
+
 export const getPublishedAnnouncementsForEvent = cache(async (eventId: string): Promise<EventAnnouncement[]> => {
   const snapshot = await getAdminDb()
     .collection("events")

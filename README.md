@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+Event QR codes use the canonical production origin `https://www.rampstudio.in` from `src/lib/events/public-url.ts`, matching the sitemap and robots configuration. Deploy the `/e/[id]` route and ensure this domain points to the deployment before distributing codes. The route needs the existing Firebase Admin configuration and redirects published events to their current slug; unpublished or deleted events are unavailable. Update the canonical origin consistently if the production domain changes.
+
 ## Getting Started
 
 First, run the development server:

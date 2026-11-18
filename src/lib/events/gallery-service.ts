@@ -70,7 +70,7 @@ export function validateGalleryFiles(files: File[]): string[] {
 
   files.forEach((file) => {
     if (file.size <= 0) errors.push(`${file.name} is empty.`);
-    if (file.size > EVENT_GALLERY_MAX_FILE_SIZE) {
+    if (file.size >= EVENT_GALLERY_MAX_FILE_SIZE) {
       errors.push(`${file.name} is too large. Upload optimized web images under 8 MB each.`);
     }
     if (!EVENT_GALLERY_ALLOWED_CONTENT_TYPES.includes(file.type)) {
