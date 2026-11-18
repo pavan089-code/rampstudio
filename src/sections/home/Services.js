@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "../../components/PortfolioImage";
+import { portfolioAsset } from "@/lib/portfolio-assets";
 
 const services = [
   {
@@ -89,7 +90,7 @@ export default function Services() {
               {/* Image */}
               <div className="relative aspect-[4/3] overflow-hidden">
                 <Image
-                  src={service.image}
+                  src={portfolioAsset(service.image)}
                   alt={service.title}
                   fill
                   sizes="(max-width: 768px) 100vw,

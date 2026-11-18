@@ -114,10 +114,10 @@ export async function POST(request: NextRequest) {
   logSessionStage(stage);
 
   try {
-    let payload: { idToken?: unknown };
+    let payload: unknown;
 
     try {
-      payload = (await request.json()) as { idToken?: unknown };
+      payload = await request.json();
     } catch (error) {
       return errorResponse({
         status: 400,
@@ -128,7 +128,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { idToken } = payload;
+    if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+      return errorResponse({
+        status: 400,
+        code: "INVALID_SESSION_REQUEST",
+        message: "Invalid admin session request.",
+        stage,
+      });
+    }
+
+    const { idToken } = payload as { idToken?: unknown };
 
     if (typeof idToken !== "string" || idToken.trim().length === 0) {
       return errorResponse({

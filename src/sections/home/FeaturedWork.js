@@ -1,5 +1,6 @@
 // src/sections/home/FeaturedWork.js
-import Image from "next/image";
+import Image from "../../components/PortfolioImage";
+import { portfolioAsset } from "@/lib/portfolio-assets";
 import Reveal from "../../components/Reveal";
 
 export default function FeaturedWork() {
@@ -54,7 +55,7 @@ export default function FeaturedWork() {
                 className={`group relative aspect-[4/5] overflow-hidden bg-white/[0.03] ${img.frame}`}
               >
                 <Image
-                  src={img.src}
+                  src={portfolioAsset(img.src)}
                   alt={`${img.title} wedding photography by Ramp Studio`}
                   fill
                   sizes="(max-width: 768px) 100vw, 58vw"

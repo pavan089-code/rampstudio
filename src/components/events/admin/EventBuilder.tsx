@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import EventAnnouncementsManager from "@/components/events/admin/EventAnnouncementsManager";
 import EventAnalyticsSummary from "@/components/events/admin/EventAnalyticsSummary";
 import EventGalleryManager from "@/components/events/admin/EventGalleryManager";
+import EventQrCode from "@/components/events/admin/EventQrCode";
 import { useAdminClientAuth } from "@/hooks/useAuth";
 import {
   createEmptyEvent,
@@ -110,6 +111,7 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [slugEdited, setSlugEdited] = useState(Boolean(eventId));
+  const [savedEvent, setSavedEvent] = useState<{ title: string; published: boolean } | null>(null);
   const { status } = useAdminClientAuth();
 
   useEffect(() => {
@@ -132,6 +134,7 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
         }
         const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...input } = record;
         setEvent(input);
+        setSavedEvent({ title: record.title, published: record.published && record.status === "published" });
       })
       .catch(() => setSaveError("Unable to load this event."))
       .finally(() => setLoading(false));
@@ -245,10 +248,13 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
     try {
       if (eventId) {
         await EventService.update(eventId, event);
+        setSavedEvent({ title: event.title, published: event.published && event.status === "published" });
       } else {
-        await EventService.create(event);
+        const createdId = await EventService.create(event);
+        router.push(`/admin/events/${createdId}`);
+        router.refresh();
+        return;
       }
-      router.push("/admin/events");
       router.refresh();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unable to save this event.");
@@ -605,6 +611,9 @@ export default function EventBuilder({ eventId }: { eventId?: string }) {
             </label>
           </Field>
         </div>
+      </FormSection>
+      <FormSection title="Event QR Code" description="Share a permanent link to this event with your guests.">
+        <EventQrCode eventId={eventId} title={savedEvent?.title ?? ""} published={savedEvent?.published ?? false} />
       </FormSection>
     </form>
   );

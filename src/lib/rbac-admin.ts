@@ -8,6 +8,8 @@ import {
   type UserRole,
 } from "@/lib/rbac-types";
 
+const BOOTSTRAP_MARKER_PATH = "_internal/bootstrap-super-admin";
+
 export class RbacAuthorizationError extends Error {
   readonly code = "auth/insufficient-permission";
 
@@ -24,7 +26,8 @@ function getBootstrapAdminEmail() {
 export async function ensureUserRoleDocument(
   token: DecodedIdToken
 ): Promise<UserRole> {
-  if (!token.email) {
+  const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
+  if (!email) {
     throw new RbacAuthorizationError(
       "The Firebase account does not have an email address."
     );
@@ -32,50 +35,47 @@ export async function ensureUserRoleDocument(
 
   const db = getAdminDb();
   const userRef = db.collection("users").doc(token.uid);
-  const email = token.email.trim().toLowerCase();
   const displayName =
     typeof token.name === "string" && token.name.trim()
       ? token.name.trim()
       : email.split("@")[0];
   const bootstrapEmail = getBootstrapAdminEmail();
+  const canBootstrap =
+    token.email_verified === true && email === bootstrapEmail;
 
   return db.runTransaction(async (transaction) => {
     const existing = await transaction.get(userRef);
 
     if (existing.exists) {
-      let role = existing.data()?.role;
+      const role = existing.data()?.role;
       if (!isUserRole(role)) {
         throw new RbacAuthorizationError("The account has an invalid RBAC role.");
-      }
-
-      if (
-        role === "viewer" &&
-        bootstrapEmail &&
-        email === bootstrapEmail
-      ) {
-        const existingAdmins = await transaction.get(
-          db.collection("users")
-            .where("role", "in", ["super_admin", "admin"])
-            .limit(1)
-        );
-
-        if (existingAdmins.empty) role = "super_admin";
       }
 
       transaction.update(userRef, {
         email,
         displayName,
-        role,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return role;
     }
 
-    const role: UserRole =
-      bootstrapEmail && email === bootstrapEmail
-        ? "super_admin"
-        : "viewer";
+    let role: UserRole = "viewer";
+    const marker = db.doc(BOOTSTRAP_MARKER_PATH);
+    if (canBootstrap && !(await transaction.get(marker)).exists) {
+      const existingAdmins = await transaction.get(
+        db.collection("users")
+          .where("role", "in", ["super_admin", "admin"])
+          .limit(1)
+      );
+      if (existingAdmins.empty) role = "super_admin";
+    }
+
     const timestamp = FieldValue.serverTimestamp();
+    if (role === "super_admin") {
+      // Create the marker atomically so concurrent requests cannot bootstrap twice.
+      transaction.create(marker, { uid: token.uid, createdAt: timestamp });
+    }
 
     transaction.create(userRef, {
       uid: token.uid,

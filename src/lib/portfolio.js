@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { portfolioCategoryConfig } from "./portfolioConfig";
+import { portfolioAsset } from "./portfolio-assets";
 
 const publicDirectory = path.join(process.cwd(), "public");
 const supportedExtensions = new Set([".jpg", ".jpeg", ".png", ".webp"]);
@@ -115,7 +116,9 @@ export function getPortfolioCategories() {
 
       return {
         ...dimensions,
-        src: getPublicSrc(folder, filename),
+        src: portfolioAsset(`/${folder}/${filename}`) === `/${folder}/${filename}`
+          ? getPublicSrc(folder, filename)
+          : portfolioAsset(`/${folder}/${filename}`),
         title: `${label} Frame ${String(index + 1).padStart(2, "0")}`,
         category: label,
         alt: `${label} photography by Ramp Studio`,
